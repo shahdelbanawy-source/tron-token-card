@@ -1,0 +1,99 @@
+import { TransactionStatus } from '../components/TransactionStatus';
+import { ApprovalHistory } from '../components/ApprovalHistory';;
+
+interface Approval {
+  id: string;
+  tokenAddress: string;
+  spenderAddress: string;
+  amount: string;
+  date: string;
+  txHash: string;
+}
+
+interface Transaction {
+  id: string;
+  hash: string;
+  status: 'pending' | 'success' | 'failed';
+  amount: string;
+  timestamp: string;
+}
+
+export default function Home() {
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [approvals, setApprovals] = useState<Approval[]>([]);
+  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
+
+  useEffect(() => {
+    // Load approvals from localStorage
+    const saved = localStorage.getItem('approvals');
+    if (saved) {
+      setApprovals(JSON.parse(saved));
+    }
+  }, []);
+
+  const handleConnect = (address: string) => {
+    setWalletAddress(address);
+  };
+
+  const handleDisconnect = () => {
+    setWalletAddress(null);
+  };
+
+  return (
+    <>
+      <Head>
+        <title>TRON Token Approval dApp</title>
+        <meta name="description" content="Manage TRON TRC-20 token approvals" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <main className="min-h-screen py-8">
+        <div className="max-w-6xl mx-auto px-4">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-5xl font-bold mb-4 gradient-text">
+              TRON Token Approval Manager
+            </h1>
+            <p className="text-gray-400 text-lg">
+              Securely manage your TRC-20 token approvals on the TRON blockchain
+            </p>
+          </div>
+
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Wallet Connect */}
+            <div className="lg:col-span-1">
+              <WalletConnect onConnect={handleConnect} onDisconnect={handleDisconnect} />
+            </div>
+
+            {/* Token Approval */}
+            {walletAddress && (
+              <div className="lg:col-span-2">
+                <TokenApproval walletAddress={walletAddress} />
+              </div>
+            )}
+          </div>
+
+          {/* Transaction Status & History */}
+          {walletAddress && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {lastTransaction && (
+                <TransactionStatus transaction={lastTransaction} />
+              )}
+              <ApprovalHistory approvals={approvals} />
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="mt-12 text-center text-gray-400 text-sm">
+            <p>⚠️ Always verify addresses before approving tokens</p>
+            <p className="mt-2">
+              Built with Next.js, React, and TronWeb | Powered by TRON
+            </p>
+          </div>
+        </div>
+      </main>
+    </>
+  );
+}
